@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmacinha - Assistente Farmacêutico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: #f1f3f4;
+            color: #333;
+            border-bottom-left-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .message.bot a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .message.bot a:hover {
+            text-decoration: underline;
+        }
+
+        .message.typing {
+            background: #f1f3f4;
+            align-self: flex-start;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .typing-text {
+            margin-right: 10px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(3) { animation-delay: -0.16s; }
+
+        .chat-input {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #messageInput {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        #messageInput:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        #sendButton {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #sendButton:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #666;
+            padding: 40px 20px;
+            font-style: italic;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .welcome-message h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 95%;
+                height: 95vh;
+                border-radius: 10px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .chat-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .chat-messages {
+                padding: 15px;
+            }
+            
+            .chat-input {
+                padding: 15px;
+            }
+        }
+
+        /* Scrollbar customization */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator" title="Online"></div>
+            <h1>
+                <span>🏥</span>
+                <span>Farmacinha</span>
+            </h1>
+            <p>Seu assistente farmacêutico profissional | Health Tech</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <h3>👋 Bem-vindo à Farmacinha!</h3>
+                <p>Sou seu assistente farmacêutico da Health Tech, com mais de 50 anos de experiência no mercado.</p>
+                <p><strong>Posso ajudar com:</strong> Protocolos de emagrecimento, cuidados com a pele, saúde em geral e muito mais!</p>
+                <p><small>💡 Dica: Sempre consulte um profissional humano para orientações específicas.</small></p>
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Digite sua pergunta sobre saúde, emagrecimento, cuidados com a pele..."
+                        rows="1"
+                    ></textarea>
+                </div>
+                <button id="sendButton" type="button" title="Enviar mensagem">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class FarmacinhaChat {
+            constructor() {
+                this.chatMessages = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.userId = this.generateUserId();
+                // URL do seu webhook n8n
+                this.apiUrl = 'https://n8n-aula.educasaopaulo.com.br/webhook-test/IA-chat';
+                
+                this.init();
+                this.loadChatHistory();
+            }
+
+            init() {
+                // Event listeners
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                // Auto-resize textarea
+                this.messageInput.addEventListener('input', () => {
+                    this.messageInput.style.height = 'auto';
+                    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+                });
+
+                // Focus no input
+                this.messageInput.focus();
+            }
+
+            generateUserId() {
+                let userId = localStorage.getItem('farmacinhaUserId');
+                if (!userId) {
+                    userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('farmacinhaUserId', userId);
+                }
+                return userId;
+            }
+
+            loadChatHistory() {
+                const history = JSON.parse(localStorage.getItem('farmacinhaHistory') || '[]');
+                history.forEach(msg => {
+                    this.addMessage(msg.text, msg.sender, false);
+                });
+            }
+
+            saveChatHistory(text, sender) {
+                const history = JSON.parse(localStorage.getItem('farmacinhaHistory') || '[]');
+                history.push({ text, sender, timestamp: Date.now() });
+                
+                // Manter apenas as últimas 50 mensagens
+                if (history.length > 50) {
+                    history.splice(0, history.length - 50);
+                }
+                
+                localStorage.setItem('farmacinhaHistory', JSON.stringify(history));
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message) return;
+
+                // Disable input while processing
+                this.setInputState(false);
+                
+                // Add user message to chat
+                this.addMessage(message, 'user');
+                this.messageInput.value = '';
+                this.messageInput.style.height = 'auto';
+                
+                // Show typing indicator
+                const typingId = this.showTypingIndicator();
+                
+                try {
+                    console.log('Enviando para n8n:', {
+                        message: message,
+                        userId: this.userId
+                    });
+                    
+                    const response = await fetch(this.apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            userId: this.userId
+                        })
+                    });
+
+                    console.log('Status da resposta:', response.status);
+
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('Resposta do n8n:', data);
+                    
+                    // Remove typing indicator
+                    this.removeTypingIndicator(typingId);
+                    
+                    // Extrai a resposta do campo 'output' (conforme seu fluxo n8n)
+                    let botMessage = '';
+                    
+                    if (data && data.output) {
+                        botMessage = data.output;
+                    } else if (data && typeof data === 'string') {
+                        botMessage = data;
+                    } else if (data && data.message) {
+                        botMessage = data.message;
+                    } else {
+                        botMessage = 'Desculpe, não consegui processar sua solicitação. Tente novamente.';
+                        console.error('Formato de resposta inesperado:', data);
+                    }
+                    
+                    // Add bot response
+                    this.addMessage(botMessage, 'bot');
+                    
+                } catch (error) {
+                    console.error('Erro ao enviar mensagem:', error);
+                    this.removeTypingIndicator(typingId);
+                    
+                    let errorMessage = 'Desculpe, ocorreu um erro de conexão. ';
+                    if (error.message.includes('Failed to fetch')) {
+                        errorMessage += 'Verifique sua conexão com a internet.';
+                    } else {
+                        errorMessage += 'Tente novamente em alguns instantes.';
+                    }
+                    
+                    this.addMessage(errorMessage, 'bot');
+                } finally {
+                    this.setInputState(true);
+                    this.messageInput.focus();
+                }
+            }
+
+            addMessage(text, sender, save = true) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                // Convert markdown-style links to HTML
+                const formattedText = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+                messageDiv.innerHTML = formattedText;
+                
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+                
+                // Save to history
+                if (save) {
+                    this.saveChatHistory(text, sender);
+                }
+            }
+
+            showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                const typingId = 'typing_' + Date.now();
+                typingDiv.id = typingId;
+                typingDiv.className = 'message typing';
+                
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'typing-indicator';
+                typingIndicator.innerHTML = `
+                    <span class="typing-text">Farmacinha está digitando</span>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                `;
+                
+                typingDiv.appendChild(typingIndicator);
+                this.chatMessages.appendChild(typingDiv);
+                this.scrollToBottom();
+                
+                return typingId;
+            }
+
+            removeTypingIndicator(typingId) {
+                const typingElement = document.getElementById(typingId);
+                if (typingElement) {
+                    typingElement.remove();
+                }
+            }
+
+            setInputState(enabled) {
+                this.messageInput.disabled = !enabled;
+                this.sendButton.disabled = !enabled;
+            }
+
+            scrollToBottom() {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+        }
+
+        // Initialize chat when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new FarmacinhaChat();
+        });
+
+        // Clear chat history function (for testing)
+        function clearChatHistory() {
+            localStorage.removeItem('farmacinhaHistory');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
