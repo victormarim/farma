@@ -353,23 +353,23 @@
             }
 
             generateUserId() {
-                let userId = localStorage.getItem('farmacinhaUserId');
+                let userId = sessionStorage.getItem('farmacinhaUserId');
                 if (!userId) {
                     userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    localStorage.setItem('farmacinhaUserId', userId);
+                    sessionStorage.setItem('farmacinhaUserId', userId);
                 }
                 return userId;
             }
 
             loadChatHistory() {
-                const history = JSON.parse(localStorage.getItem('farmacinhaHistory') || '[]');
+                const history = JSON.parse(sessionStorage.getItem('farmacinhaHistory') || '[]');
                 history.forEach(msg => {
                     this.addMessage(msg.text, msg.sender, false);
                 });
             }
 
             saveChatHistory(text, sender) {
-                const history = JSON.parse(localStorage.getItem('farmacinhaHistory') || '[]');
+                const history = JSON.parse(sessionStorage.getItem('farmacinhaHistory') || '[]');
                 history.push({ text, sender, timestamp: Date.now() });
                 
                 // Manter apenas as últimas 50 mensagens
@@ -377,7 +377,7 @@
                     history.splice(0, history.length - 50);
                 }
                 
-                localStorage.setItem('farmacinhaHistory', JSON.stringify(history));
+                sessionStorage.setItem('farmacinhaHistory', JSON.stringify(history));
             }
 
             async sendMessage() {
@@ -578,7 +578,7 @@
 
         // Clear chat history function (for testing)
         function clearChatHistory() {
-            localStorage.removeItem('farmacinhaHistory');
+            sessionStorage.removeItem('farmacinhaHistory');
             location.reload();
         }
     </script>
